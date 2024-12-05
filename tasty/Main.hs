@@ -19,6 +19,7 @@ import qualified OpenAI.Servant.V1.Audio.Speech as Speech
 import qualified OpenAI.Servant.V1.Audio.Transcriptions as Transcriptions
 import qualified OpenAI.Servant.V1.Audio.Translations as Translations
 import qualified OpenAI.Servant.V1.Chat.Completions as Completions
+import qualified OpenAI.Servant.V1.Embeddings as Embeddings
 import qualified Servant.Client as Client
 import qualified System.Environment as Environment
 import qualified Servant.Multipart.Client as Multipart.Client
@@ -44,11 +45,14 @@ main = do
 
     let authorization = "Bearer " <> Text.pack key
 
+    let user = "openai Haskell package"
+
     let (       (    v1AudioSpeech
                 :<|> v1AudioTranscriptions
                 :<|> v1AudioTranslations
                 )
           :<|>  v1ChatCompletions
+          :<|>  v1Embeddings
           ) = Client.client (Proxy @V1.API) authorization
 
     let run :: ClientM a -> IO a
@@ -222,19 +226,35 @@ main = do
                             Just Completions.ToolChoiceAuto
                         , Completions.parallel_tool_calls =
                             Just True
-                        , Completions.user = Just "openai Haskell package"
+                        , Completions.user = Just user
                         }
 
                     return ()
+
+    let v1EmbeddingsTest = do
+            HUnit.testCase "/v1/embeddings" do
+                run do
+                    _ <- v1Embeddings Embeddings.Request
+                        { Embeddings.input = "Hello, world!"
+                        , Embeddings.model = "text-embedding-3-small"
+                        , Embeddings.encoding_format = Just Embeddings.Float
+                        , Embeddings.dimensions = Just 1024
+                        , Embeddings.user = Just user
+                        }
+
+                    return ()
+
     let v1AudioSpeechTests = do
             format <- [ minBound .. maxBound ]
             return (v1AudioSpeechTest format)
 
     let tests =
                 v1AudioSpeechTests
-            <>  [ v1AudioTranscriptionsTest ]
-            <>  [ v1AudioTranslationsTest ]
-            <>  [ v1ChatCompletionsMinimalTest ]
-            <>  [ v1ChatCompletionsMaximalTest ]
+            <>  [ v1AudioTranscriptionsTest
+                , v1AudioTranslationsTest
+                , v1ChatCompletionsMinimalTest
+                , v1ChatCompletionsMaximalTest
+                , v1EmbeddingsTest
+                ]
 
     Tasty.defaultMain (Tasty.testGroup "Tests" tests)

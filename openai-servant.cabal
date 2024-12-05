@@ -30,6 +30,7 @@ library
                         OpenAI.Servant.V1.Audio.Transcriptions
                         OpenAI.Servant.V1.Audio.Translations
                         OpenAI.Servant.V1.Chat.Completions
+                        OpenAI.Servant.V1.Embeddings
     other-modules:      OpenAI.Servant.Prelude
     default-extensions: DataKinds
                       , DeriveAnyClass
