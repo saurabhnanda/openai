@@ -1,4 +1,4 @@
--- | @/v1/audio@
+-- | @\/v1\/audio@
 module OpenAI.Servant.V1.Audio
     ( -- * API
       API

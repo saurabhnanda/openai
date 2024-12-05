@@ -1,4 +1,4 @@
--- | @/v1/audio/speech@
+-- | @\/v1\/audio\/speech@
 module OpenAI.Servant.V1.Audio.Speech
     ( -- * API
       Voice(..)
@@ -22,7 +22,7 @@ instance ToJSON Voice where
     toJSON = genericToJSON aesonOptions
 
 -- | The format to audio in
-data Format = MP3 | Opus | AAC | Flac | Wav
+data Format = MP3 | Opus | AAC | FLAC | WAV | PCM
     deriving stock (Bounded, Enum, Generic, Show)
 
 instance ToJSON Format where
@@ -47,7 +47,12 @@ data ContentType = ContentType
 instance Accept ContentType where
     contentTypes _ =
             "audio/mpeg"
-        :|  [ "audio/flac", "audio/wav", "audio/aac", "audio/opus" ]
+        :|  [ "audio/flac"
+            , "audio/wav"
+            , "audio/aac"
+            , "audio/opus"
+            , "audio/pcm"
+            ]
 
 instance MimeUnrender ContentType ByteString where
     mimeUnrender _ bytes = Right bytes

@@ -1,4 +1,4 @@
--- | @/v1/audio/transcriptions@
+-- | @\/v1\/audio\/transcriptions@
 --
 -- To simplify things, this only supports the @verbose_json@ response format
 -- and also only supports the @segment@ granularity

@@ -1,5 +1,6 @@
 {-# LANGUAGE BlockArguments    #-}
 {-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE OverloadedLists   #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications  #-}
 
@@ -17,6 +18,7 @@ import qualified OpenAI.Servant.V1 as V1
 import qualified OpenAI.Servant.V1.Audio.Speech as Speech
 import qualified OpenAI.Servant.V1.Audio.Transcriptions as Transcriptions
 import qualified OpenAI.Servant.V1.Audio.Translations as Translations
+import qualified OpenAI.Servant.V1.Chat.Completions as Completions
 import qualified Servant.Client as Client
 import qualified System.Environment as Environment
 import qualified Servant.Multipart.Client as Multipart.Client
@@ -42,9 +44,11 @@ main = do
 
     let authorization = "Bearer " <> Text.pack key
 
-    let (      v1AudioSpeech
-          :<|> v1AudioTranscriptions
-          :<|> v1AudioTranslations
+    let (       (    v1AudioSpeech
+                :<|> v1AudioTranscriptions
+                :<|> v1AudioTranslations
+                )
+          :<|>  v1ChatCompletions
           ) = Client.client (Proxy @V1.API) authorization
 
     let run :: ClientM a -> IO a
@@ -109,6 +113,119 @@ main = do
 
                     return ()
 
+    let v1ChatCompletionsMinimalTest =
+            HUnit.testCase "/v1/chat/completions - minimal" do
+                run do
+                    _ <- v1ChatCompletions Completions.Request
+                        { Completions.messages =
+                            [ Completions.User
+                                { Completions.content = "Hello, world!"
+                                , Completions.name = Nothing
+                                }
+                            ]
+                        , Completions.model = "gpt-4o-mini"
+                        , Completions.store = Nothing
+                        , Completions.metadata = Nothing
+                        , Completions.frequency_penalty = Nothing
+                        , Completions.logit_bias = Nothing
+                        , Completions.logprobs = Nothing
+                        , Completions.top_logprobs = Nothing
+                        , Completions.max_completion_tokens = Nothing
+                        , Completions.n = Nothing
+                        , Completions.modalities = Nothing
+                        , Completions.prediction = Nothing
+                        , Completions.audio = Nothing
+                        , Completions.presence_penalty = Nothing
+                        , Completions.response_format = Nothing
+                        , Completions.seed = Nothing
+                        , Completions.service_tier = Nothing
+                        , Completions.stop = Nothing
+                        , Completions.temperature = Nothing
+                        , Completions.top_p = Nothing
+                        , Completions.tools = Nothing
+                        , Completions.tool_choice = Nothing
+                        , Completions.parallel_tool_calls = Nothing
+                        , Completions.user = Nothing
+                        }
+
+                    return ()
+
+    let v1ChatCompletionsMaximalTest =
+            HUnit.testCase "/v1/chat/completions - maximal" do
+                run do
+                    _ <- v1ChatCompletions Completions.Request
+                        { Completions.messages =
+                            [ Completions.User
+                                { Completions.content = "Hello, world!"
+                                , Completions.name = Just "gabby"
+                                }
+                            , Completions.Assistant
+                                { Completions.assistant_content = Nothing
+                                , Completions.refusal = Nothing
+                                , Completions.name = Just "Ada"
+                                , Completions.assistant_audio = Nothing
+                                , Completions.tool_calls = Just
+                                    [ Completions.ToolCall_Function
+                                        { Completions.called_id =
+                                            "call_bzE95mjMMFqeanfY2sL6Sdir"
+                                        , Completions.called_function =
+                                            Completions.CalledFunction
+                                              { Completions.called_name =
+                                                  "hello"
+                                              , Completions.called_arguments =
+                                                  "{}"
+                                              }
+                                        }
+                                    ]
+                                }
+                            , Completions.Tool
+                                { Completions.content = "Hello, world!"
+                                , Completions.tool_call_id =
+                                    "call_bzE95mjMMFqeanfY2sL6Sdir"
+                                }
+                            ]
+                        , Completions.model = "gpt-4o-mini"
+                        , Completions.store = Just False
+                        , Completions.metadata = Nothing
+                        , Completions.frequency_penalty = Just 0
+                        , Completions.logit_bias = Just mempty
+                        , Completions.logprobs = Just True
+                        , Completions.top_logprobs = Just 1
+                        , Completions.max_completion_tokens = Just 1024
+                        , Completions.n = Just 1
+                        , Completions.modalities = Just [ Completions.Text ]
+                        , Completions.prediction = Nothing
+                        , Completions.audio = Nothing
+                        , Completions.presence_penalty = Just 0
+                        , Completions.response_format =
+                            Just Completions.ResponseFormat_Text
+                        , Completions.seed = Just 0
+                        , Completions.service_tier =
+                            Just Completions.ServiceTier_Auto
+                        , Completions.stop = Just [ ">>>" ]
+                        , Completions.temperature = Just 1
+                        , Completions.top_p = Just 1
+                        , Completions.tools = Just
+                            [ Completions.Tool_Function
+                                { Completions.callable_function =
+                                    Completions.CallableFunction
+                                      { Completions.callable_description =
+                                          Just "Use the hello command line tool"
+                                      , Completions.callable_name =
+                                          "hello"
+                                      , Completions.parameters = Nothing
+                                      , Completions.strict = Just False
+                                      }
+                                }
+                            ]
+                        , Completions.tool_choice =
+                            Just Completions.ToolChoiceAuto
+                        , Completions.parallel_tool_calls =
+                            Just True
+                        , Completions.user = Just "openai Haskell package"
+                        }
+
+                    return ()
     let v1AudioSpeechTests = do
             format <- [ minBound .. maxBound ]
             return (v1AudioSpeechTest format)
@@ -117,5 +234,7 @@ main = do
                 v1AudioSpeechTests
             <>  [ v1AudioTranscriptionsTest ]
             <>  [ v1AudioTranslationsTest ]
+            <>  [ v1ChatCompletionsMinimalTest ]
+            <>  [ v1ChatCompletionsMaximalTest ]
 
     Tasty.defaultMain (Tasty.testGroup "Tests" tests)

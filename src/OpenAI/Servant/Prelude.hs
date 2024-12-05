@@ -1,6 +1,7 @@
 module OpenAI.Servant.Prelude
     ( -- * JSON
       aesonOptions
+    , stripPrefix
 
       -- * Multipart Form Data
     , input
@@ -11,21 +12,34 @@ module OpenAI.Servant.Prelude
     , module Data.Aeson
     , module Data.ByteString.Lazy
     , module Data.List.NonEmpty
+    , module Data.Map
     , module Data.Text
     , module Data.Vector
+    , module Data.Word
     , module GHC.Generics
+    , module Numeric.Natural
     , module Servant.API
     , module Servant.Multipart.API
     ) where
 
-import Data.Aeson (FromJSON(..), ToJSON(..), Options(..), genericToJSON)
 import Data.ByteString.Lazy (ByteString)
-import Data.Char (toLower)
 import Data.List.NonEmpty (NonEmpty(..))
+import Data.Map (Map)
 import Data.Text (Text)
 import Data.Vector (Vector)
 import GHC.Generics (Generic)
+import Data.Word (Word8)
+import Numeric.Natural (Natural)
 
+import Data.Aeson
+    ( FromJSON(..)
+    , ToJSON(..)
+    , Options(..)
+    , SumEncoding(..)
+    , Value(..)
+    , genericParseJSON
+    , genericToJSON
+    )
 import Servant.API
     ( Accept(..)
     , JSON
@@ -46,6 +60,8 @@ import Servant.Multipart.API
     )
 
 import qualified Data.Aeson as Aeson
+import qualified Data.Char as Char
+import qualified Data.List as List
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as Text.Lazy
 import qualified Data.Text.Lazy.Builder as Builder
@@ -57,10 +73,20 @@ dropTrailingUnderscore "_" = ""
 dropTrailingUnderscore ""  = ""
 dropTrailingUnderscore (c : cs) = c : dropTrailingUnderscore cs
 
+labelModifier :: String -> String
+labelModifier = map Char.toLower . dropTrailingUnderscore
+
+stripPrefix :: String -> String -> String
+stripPrefix prefix string = labelModifier suffix
+  where
+    suffix = case List.stripPrefix prefix string of
+        Nothing -> string
+        Just x  -> x
+
 aesonOptions :: Options
 aesonOptions = Aeson.defaultOptions
-    { fieldLabelModifier = dropTrailingUnderscore
-    , constructorTagModifier = map toLower
+    { fieldLabelModifier = labelModifier
+    , constructorTagModifier = labelModifier
     , omitNothingFields = True
     }
 

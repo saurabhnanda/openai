@@ -17,6 +17,7 @@ library
     build-depends:      base >=4.15.0.0 && < 5
                       , aeson
                       , bytestring
+                      , containers
                       , filepath
                       , servant
                       , servant-multipart-api
@@ -24,15 +25,19 @@ library
                       , vector
     exposed-modules:    OpenAI.Servant.V1
                         OpenAI.Servant.V1.Audio
+                        OpenAI.Servant.V1.Chat
                         OpenAI.Servant.V1.Audio.Speech
                         OpenAI.Servant.V1.Audio.Transcriptions
                         OpenAI.Servant.V1.Audio.Translations
+                        OpenAI.Servant.V1.Chat.Completions
     other-modules:      OpenAI.Servant.Prelude
     default-extensions: DataKinds
                       , DeriveAnyClass
                       , DeriveGeneric
                       , DerivingStrategies
                       , DuplicateRecordFields
+                      , NoFieldSelectors
+                      , OverloadedLists
                       , OverloadedStrings
                       , RecordWildCards
                       , MultiParamTypeClasses
@@ -45,6 +50,7 @@ test-suite tasty
     hs-source-dirs:   tasty
     main-is:          Main.hs
     build-depends:    base
+                    , aeson
                     , http-client
                     , http-client-tls
                     , openai

@@ -1,4 +1,4 @@
--- | @/v1/audio/translations@
+-- | @\/v1\/audio\/translations@
 --
 -- To simplify things, this only supports the @verbose_json@ response format
 module OpenAI.Servant.V1.Audio.Translations
