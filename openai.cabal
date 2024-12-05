@@ -17,17 +17,23 @@ library
     build-depends:      base >=4.15.0.0 && < 5
                       , aeson
                       , bytestring
+                      , filepath
                       , servant
+                      , servant-multipart-api
                       , text
+                      , vector
     exposed-modules:    OpenAI.Servant.V1
                         OpenAI.Servant.V1.Audio
                         OpenAI.Servant.V1.Audio.Speech
+                        OpenAI.Servant.V1.Audio.Transcriptions
     other-modules:      OpenAI.Servant.Prelude
     default-extensions: DataKinds
                       , DeriveAnyClass
                       , DeriveGeneric
                       , DerivingStrategies
+                      , DuplicateRecordFields
                       , OverloadedStrings
+                      , RecordWildCards
                       , MultiParamTypeClasses
                       , TypeOperators
     ghc-options:        -Wall
@@ -41,7 +47,9 @@ test-suite tasty
                     , http-client
                     , http-client-tls
                     , openai
+                    , servant
                     , servant-client
+                    , servant-multipart-client
                     , tasty
                     , tasty-hunit
                     , text

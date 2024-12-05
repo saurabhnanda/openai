@@ -31,21 +31,12 @@ instance ToJSON Format where
 -- | Request body
 data Request = Request
     { model :: Text
-      -- ^ One of the available
-      -- [TTS models](https://platform.openai.com/docs/models#tts)
     , input :: Text
-      -- ^ The text to generate audio for. The maximum length is 4096
-      -- characters.
     , voice :: Voice
-      -- ^
     , response_format :: Maybe Format
-      -- ^ Defaults to `MP3`
     , speed :: Maybe Double
-      -- ^ The speed of the generated audio. Select a value from 0.25 to 4.0.
-      -- 1.0 is the default.
-    }
-    deriving stock (Generic, Show)
-    deriving anyclass (ToJSON)
+    } deriving stock (Generic, Show)
+      deriving anyclass (ToJSON)
 
 -- | Response body
 type Response = ByteString
