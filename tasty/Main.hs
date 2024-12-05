@@ -16,6 +16,7 @@ import qualified Network.HTTP.Client.TLS as TLS
 import qualified OpenAI.Servant.V1 as V1
 import qualified OpenAI.Servant.V1.Audio.Speech as Speech
 import qualified OpenAI.Servant.V1.Audio.Transcriptions as Transcriptions
+import qualified OpenAI.Servant.V1.Audio.Translations as Translations
 import qualified Servant.Client as Client
 import qualified System.Environment as Environment
 import qualified Servant.Multipart.Client as Multipart.Client
@@ -41,7 +42,10 @@ main = do
 
     let authorization = "Bearer " <> Text.pack key
 
-    let (v1AudioSpeech :<|> v1AudioTranscriptions) = Client.client (Proxy @V1.API) authorization
+    let (      v1AudioSpeech
+          :<|> v1AudioTranscriptions
+          :<|> v1AudioTranslations
+          ) = Client.client (Proxy @V1.API) authorization
 
     let run :: ClientM a -> IO a
         run clientM = do
@@ -52,19 +56,18 @@ main = do
 
     -- Test each format to make sure we're handling each possible content type
     -- correctly
-    let v1AudioSpeechTest format = HUnit.testCase name do
-            run do
-                _ <- v1AudioSpeech Speech.Request
-                    { Speech.model = "tts-1"
-                    , Speech.input = "Hello, world!"
-                    , Speech.voice = Speech.Nova
-                    , Speech.response_format = Just format
-                    , Speech.speed = Just 1.0
-                    }
+    let v1AudioSpeechTest format =
+            HUnit.testCase ("/v1/audio/speech - " <> show format) do
+                run do
+                    _ <- v1AudioSpeech Speech.Request
+                        { Speech.model = "tts-1"
+                        , Speech.input = "Hello, world!"
+                        , Speech.voice = Speech.Nova
+                        , Speech.response_format = Just format
+                        , Speech.speed = Just 1.0
+                        }
 
-                return ()
-          where
-            name = "/v1/audio/speech - " <> show format
+                    return ()
 
     let v1AudioTranscriptionsTest =
             HUnit.testCase "/v1/audio/transcriptions" do
@@ -73,7 +76,7 @@ main = do
                         ( boundary
                         , Transcriptions.Request
                             { Transcriptions.file =
-                                "tasty/data/v1/audio/transcriptions.wav"
+                                "tasty/data/v1/audio/preamble.wav"
                             , Transcriptions.model =
                                 "whisper-1"
                             , Transcriptions.language =
@@ -87,6 +90,25 @@ main = do
 
                     return ()
 
+    let v1AudioTranslationsTest =
+            HUnit.testCase "/v1/audio/translations" do
+                run do
+                    _ <- v1AudioTranslations
+                        ( boundary
+                        , Translations.Request
+                            { Translations.file =
+                                "tasty/data/v1/audio/preamble.wav"
+                            , Translations.model =
+                                "whisper-1"
+                            , Translations.prompt =
+                                Nothing
+                            , Translations.temperature =
+                                Just 0
+                            }
+                        )
+
+                    return ()
+
     let v1AudioSpeechTests = do
             format <- [ minBound .. maxBound ]
             return (v1AudioSpeechTest format)
@@ -94,5 +116,6 @@ main = do
     let tests =
                 v1AudioSpeechTests
             <>  [ v1AudioTranscriptionsTest ]
+            <>  [ v1AudioTranslationsTest ]
 
     Tasty.defaultMain (Tasty.testGroup "Tests" tests)

@@ -26,6 +26,7 @@ library
                         OpenAI.Servant.V1.Audio
                         OpenAI.Servant.V1.Audio.Speech
                         OpenAI.Servant.V1.Audio.Transcriptions
+                        OpenAI.Servant.V1.Audio.Translations
     other-modules:      OpenAI.Servant.Prelude
     default-extensions: DataKinds
                       , DeriveAnyClass
