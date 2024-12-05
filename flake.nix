@@ -16,11 +16,11 @@
         };
 
       in
-        { packages.default = pkgs.haskellPackagesCustom.openai;
+        { packages.default = pkgs.haskellPackagesCustom.openai-servant;
 
           devShells.default = pkgs.haskellPackagesCustom.shellFor {
             packages = hpkgs: [
-              hpkgs.openai
+              hpkgs.openai-servant
             ];
 
             nativeBuildInputs = [
@@ -50,7 +50,7 @@
             in
               self.lib.composeManyExtensions [
                 (hlib.packageSourceOverrides {
-                  openai = ./.;
+                  openai-servant = ./.;
                 })
 
                 (hlib.packagesFromDirectory {
