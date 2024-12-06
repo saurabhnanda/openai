@@ -374,7 +374,7 @@ data Usage = Usage
 data Response = Response
     { id :: Text
     , choices :: Vector Choice
-    , created :: Natural
+    , created :: POSIXTime
     , response_model :: Text
     , response_service_tier :: Maybe ServiceTier
     , system_fingerprint :: Text

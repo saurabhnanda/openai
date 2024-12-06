@@ -2,6 +2,7 @@ module OpenAI.Servant.Prelude
     ( -- * JSON
       aesonOptions
     , stripPrefix
+    , labelModifier
 
       -- * Multipart Form Data
     , input
@@ -14,6 +15,7 @@ module OpenAI.Servant.Prelude
     , module Data.List.NonEmpty
     , module Data.Map
     , module Data.Text
+    , module Data.Time.Clock.POSIX
     , module Data.Vector
     , module Data.Word
     , module GHC.Generics
@@ -26,6 +28,7 @@ import Data.ByteString.Lazy (ByteString)
 import Data.List.NonEmpty (NonEmpty(..))
 import Data.Map (Map)
 import Data.Text (Text)
+import Data.Time.Clock.POSIX (POSIXTime)
 import Data.Vector (Vector)
 import GHC.Generics (Generic)
 import Data.Word (Word8)
@@ -42,6 +45,7 @@ import Data.Aeson
     )
 import Servant.API
     ( Accept(..)
+    , Capture
     , JSON
     , MimeUnrender(..)
     , OctetStream

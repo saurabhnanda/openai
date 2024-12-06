@@ -20,6 +20,12 @@ import qualified OpenAI.Servant.V1.Audio.Transcriptions as Transcriptions
 import qualified OpenAI.Servant.V1.Audio.Translations as Translations
 import qualified OpenAI.Servant.V1.Chat.Completions as Completions
 import qualified OpenAI.Servant.V1.Embeddings as Embeddings
+import qualified OpenAI.Servant.V1.Files as Files
+import qualified OpenAI.Servant.V1.Files.File as File
+import qualified OpenAI.Servant.V1.Files.Purpose as Purpose
+import qualified OpenAI.Servant.V1.FineTuning.Jobs as Jobs
+import qualified OpenAI.Servant.V1.FineTuning.Jobs.Hyperparameters as Hyperparameters
+import qualified OpenAI.Servant.V1.FineTuning.Jobs.Job as Job
 import qualified Servant.Client as Client
 import qualified System.Environment as Environment
 import qualified Servant.Multipart.Client as Multipart.Client
@@ -46,13 +52,18 @@ main = do
     let authorization = "Bearer " <> Text.pack key
 
     let user = "openai Haskell package"
+    let chatModel = "gpt-4o-mini"
 
-    let (       (    v1AudioSpeech
-                :<|> v1AudioTranscriptions
-                :<|> v1AudioTranslations
+    let (       (     v1AudioSpeech
+                :<|>  v1AudioTranscriptions
+                :<|>  v1AudioTranslations
                 )
           :<|>  v1ChatCompletions
           :<|>  v1Embeddings
+          :<|>  (     v1FineTuningJobs
+                :<|>  v1FineTuningJobsIdCancel
+                )
+          :<|>  v1Files
           ) = Client.client (Proxy @V1.API) authorization
 
     let run :: ClientM a -> IO a
@@ -127,7 +138,7 @@ main = do
                                 , Completions.name = Nothing
                                 }
                             ]
-                        , Completions.model = "gpt-4o-mini"
+                        , Completions.model = chatModel
                         , Completions.store = Nothing
                         , Completions.metadata = Nothing
                         , Completions.frequency_penalty = Nothing
@@ -188,7 +199,7 @@ main = do
                                     "call_bzE95mjMMFqeanfY2sL6Sdir"
                                 }
                             ]
-                        , Completions.model = "gpt-4o-mini"
+                        , Completions.model = chatModel
                         , Completions.store = Just False
                         , Completions.metadata = Nothing
                         , Completions.frequency_penalty = Just 0
@@ -244,6 +255,75 @@ main = do
 
                     return ()
 
+    let v1FineTuningMinimalTest = do
+            HUnit.testCase "/v1/files + /v1/fine_tuning/jobs - minimal" do
+                run do
+                    file <- v1Files
+                        ( boundary
+                        , Files.Request
+                            { Files.file =
+                                "tasty/data/v1/fine_tuning/jobs/training_data.json"
+                            , Files.purpose = Purpose.Fine_Tune
+                            }
+                        )
+
+                    job <- v1FineTuningJobs Jobs.Request
+                        { Jobs.model = "gpt-4o-mini-2024-07-18"
+                        , Jobs.training_file = File.id file
+                        , Jobs.hyperparameters = Nothing
+                        , Jobs.suffix = Nothing
+                        , Jobs.validation_file = Nothing
+                        , Jobs.integrations = Nothing
+                        , Jobs.seed = Nothing
+                        }
+
+                    _ <- v1FineTuningJobsIdCancel (Job.id job)
+
+                    return ()
+
+    let v1FineTuningMaximalTest = do
+            HUnit.testCase "/v1/files + /v1/fine_tuning/jobs - maximal" do
+                run do
+                    trainingFile <- v1Files
+                        ( boundary
+                        , Files.Request
+                            { Files.file =
+                                "tasty/data/v1/fine_tuning/jobs/training_data.json"
+                            , Files.purpose = Purpose.Fine_Tune
+                            }
+                        )
+
+                    validationFile <- v1Files
+                        ( boundary
+                        , Files.Request
+                            { Files.file =
+                                "tasty/data/v1/fine_tuning/jobs/validation_data.json"
+                            , Files.purpose = Purpose.Fine_Tune
+                            }
+                        )
+
+                    job <- v1FineTuningJobs Jobs.Request
+                        { Jobs.model = "gpt-4o-mini-2024-07-18"
+                        , Jobs.training_file = File.id trainingFile
+                        , Jobs.hyperparameters = Just
+                              Hyperparameters.Hyperparameters
+                                  { Hyperparameters.batch_size =
+                                      Just Hyperparameters.Auto
+                                  , Hyperparameters.learning_rate_multiplier =
+                                      Just Hyperparameters.Auto
+                                  , Hyperparameters.n_epochs =
+                                      Just Hyperparameters.Auto
+                                  }
+                        , Jobs.suffix = Just "haskell-openai"
+                        , Jobs.validation_file = Just (File.id validationFile)
+                        , Jobs.integrations = Just []
+                        , Jobs.seed = Just 0
+                        }
+
+                    _ <- v1FineTuningJobsIdCancel (Job.id job)
+
+                    return ()
+
     let v1AudioSpeechTests = do
             format <- [ minBound .. maxBound ]
             return (v1AudioSpeechTest format)
@@ -255,6 +335,8 @@ main = do
                 , v1ChatCompletionsMinimalTest
                 , v1ChatCompletionsMaximalTest
                 , v1EmbeddingsTest
+                , v1FineTuningMinimalTest
+                , v1FineTuningMaximalTest
                 ]
 
     Tasty.defaultMain (Tasty.testGroup "Tests" tests)
