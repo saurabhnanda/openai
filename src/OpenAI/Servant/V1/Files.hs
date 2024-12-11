@@ -3,7 +3,7 @@ module OpenAI.Servant.V1.Files
     ( -- * Main types
       UploadFile(..)
     , _UploadFile
-    , File(..)
+    , FileObject(..)
     -- * Other types
     , Order(..)
     , Purpose(..)
@@ -41,8 +41,8 @@ instance ToMultipart Tmp UploadFile where
             fdFileCType = "application/json"
             fdPayload = file
 
--- | The `File` object represents a document that has been uploaded to OpenAI
-data File = File
+-- | The File object represents a document that has been uploaded to OpenAI
+data FileObject = FileObject
     { id :: Text
     , bytes :: Natural
     , created_at :: POSIXTime
@@ -90,14 +90,14 @@ instance ToHttpApiData Purpose where
 type API =
         "files"
     :>  (         MultipartForm Tmp UploadFile
-              :>  Post '[JSON] File
+              :>  Post '[JSON] FileObject
         :<|>      QueryParam "purpose" Purpose
               :>  QueryParam "limit" Natural
               :>  QueryParam "order" Order
               :>  QueryParam "after" Text
-              :>  Get '[JSON] (ListOf File)
+              :>  Get '[JSON] (ListOf FileObject)
         :<|>      Capture "file_id" Text
-              :>  Get '[JSON] File
+              :>  Get '[JSON] FileObject
         :<|>      Capture "file_id" Text
               :>  Delete '[JSON] DeletionStatus
         :<|>      Capture "file_id" Text
