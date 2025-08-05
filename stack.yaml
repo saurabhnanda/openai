@@ -1,0 +1,7 @@
+resolver: lts-18.28
+
+packages:
+  - '.'
+
+extra-deps:
+  - servant-multipart-client-0.12.2
